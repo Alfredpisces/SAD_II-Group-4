@@ -73,7 +73,7 @@
 
                     <div class="flex gap-2 justify-end mt-auto">
                         @if ($order->status != 'preparing')
-                            <form action="{{ route('orders.update', $order->id) }}" method="POST">
+                            <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="status" value="preparing">
                                 <button type="submit"
@@ -81,7 +81,7 @@
                                     Making</button>
                             </form>
                         @endif
-                        <form action="{{ route('orders.update', $order->id) }}" method="POST">
+                        <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST">
                             @csrf
                             <input type="hidden" name="status" value="ready">
                             <button type="submit"

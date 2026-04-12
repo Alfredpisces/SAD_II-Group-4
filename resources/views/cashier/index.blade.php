@@ -99,7 +99,7 @@
             <div class="bg-white p-8 rounded-3xl shadow-lg flex-1 flex flex-col overflow-hidden">
                 <h2 class="text-2xl font-bold mb-4 text-[#3D2314]">Current Order</h2>
                 <div id="order-items-list" class="flex-1 overflow-y-auto border-b mb-4"></div>
-                <form action="{{ route('orders.store') }}" method="POST">
+                <form action="{{ route('cashier.orders.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="item_name" id="hidden-item-name">
                     <input type="hidden" name="total" id="hidden-total">
