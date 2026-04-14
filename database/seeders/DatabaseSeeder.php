@@ -11,24 +11,21 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create a Default Admin User for Login
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@cafe.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
-        ]);
-
-        // 2. Create the Required Ingredients (Raw Materials)
-        $ingredients = [
-            ['name' => 'Coffee Beans', 'category' => 'Raw Material', 'stock' => 5000],
-            ['name' => 'Fresh Milk', 'category' => 'Raw Material', 'stock' => 5000],
-            ['name' => 'Condensed Milk', 'category' => 'Raw Material', 'stock' => 5000],
-            ['name' => 'Paper Cup', 'category' => 'Raw Material', 'stock' => 1000],
+        // Default accounts — run: php artisan db:seed
+        // Admin   : admin@cafe.com    / admin123
+        // Barista : barista@cafe.com  / barista123
+        // Cashier : cashier@cafe.com  / cashier123
+        $defaultUsers = [
+            ['name' => 'Admin User',    'email' => 'admin@cafe.com',   'password' => Hash::make('admin123'),   'role' => 'admin'],
+            ['name' => 'Default Barista', 'email' => 'barista@cafe.com', 'password' => Hash::make('barista123'), 'role' => 'barista'],
+            ['name' => 'Default Cashier', 'email' => 'cashier@cafe.com', 'password' => Hash::make('cashier123'), 'role' => 'cashier'],
         ];
 
-        foreach ($ingredients as $item) {
-            Product::create($item);
+        foreach ($defaultUsers as $userData) {
+            User::firstOrCreate(['email' => $userData['email']], $userData);
         }
+
+        // 2. Seed all products and ingredients via IngredientSeeder
+        $this->call(IngredientSeeder::class);
     }
 }

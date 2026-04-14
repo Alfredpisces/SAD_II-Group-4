@@ -63,14 +63,14 @@ Route::middleware(['auth'])->group(function () {
         };
     })->name('dashboard');
 
-    Route::prefix('cashier')->name('cashier.')->group(function () {
+    Route::prefix('cashier')->name('cashier.')->middleware(['role:cashier'])->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     });
 
-    Route::get('/barista/dashboard', [BaristaController::class, 'index'])->name('barista.dashboard');
+    Route::get('/barista/dashboard', [BaristaController::class, 'index'])->middleware(['role:barista'])->name('barista.dashboard');
 
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware(['role:admin'])->group(function () {
         Route::get('/dashboard', function () {
             $totalRevenue  = \App\Models\Order::where('status', 'completed')->sum('total') ?: 0;
             $totalOrders   = \App\Models\Order::count();
