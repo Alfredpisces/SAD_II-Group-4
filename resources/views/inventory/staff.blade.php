@@ -37,7 +37,8 @@
                             {{ sprintf('%02d', count($staffs)) }}</p>
                     </div>
 
-                    {{-- Default Login Info Box --}}
+                    {{-- Default Login Info Box (shown only in non-production environments) --}}
+                    @if (!app()->isProduction())
                     <div style="margin-top: 1.5rem; background-color: #fcf9f1; border: 1px dashed #d4b08c; border-radius: 1rem; padding: 1rem;">
                         <p style="margin: 0 0 0.5rem 0; font-size: 0.7rem; font-weight: 900; color: #3d2b1f; text-transform: uppercase; letter-spacing: 0.05em;">Default Credentials</p>
                         <p style="margin: 0; font-size: 0.75rem; color: #6b7280;"><strong>Admin:</strong> admin@cafe.com / admin123</p>
@@ -45,6 +46,7 @@
                         <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: #6b7280;"><strong>Cashier:</strong> cashier@cafe.com / cashier123</p>
                         <p style="margin: 0.5rem 0 0 0; font-size: 0.65rem; color: #9ca3af; font-style: italic;">Change passwords after first login.</p>
                     </div>
+                    @endif
 
                     <button onclick="document.getElementById('addStaffModal').classList.remove('hidden')"
                         style="width: 100%; margin-top: 1.5rem; background-color: #3d2b1f; color: #d4b08c; padding: 1rem; border-radius: 1rem; border: none; font-weight: bold; cursor: pointer;">
