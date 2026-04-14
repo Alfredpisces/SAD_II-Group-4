@@ -5,6 +5,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\BaristaController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         $role = auth()->user()->role;
         return match($role) {
-            'admin'   => redirect()->route('inventory.index'),
+            'admin'   => redirect()->route('admin.dashboard'),
             'barista' => redirect()->route('barista.dashboard'),
             'cashier' => redirect()->route('cashier.orders'),
             default   => redirect()->route('cashier.orders'),
@@ -70,6 +71,29 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/barista/dashboard', [BaristaController::class, 'index'])->name('barista.dashboard');
 
     Route::prefix('admin')->group(function () {
+        Route::get('/dashboard', function () {
+            $totalRevenue  = \App\Models\Order::where('status', 'completed')->sum('total') ?: 0;
+            $totalOrders   = \App\Models\Order::count();
+            $ordersToday   = \App\Models\Order::whereDate('created_at', today())->count();
+            $lowStockCount = \App\Models\Product::where('category', 'Raw Material')
+                ->whereColumn('stock', '<=', 'min_stock')->count();
+            $activePromotions = \App\Models\Promotion::where('is_active', true)
+                ->whereDate('start_date', '<=', today())
+                ->whereDate('end_date', '>=', today())
+                ->count();
+            $topItems = \App\Models\Order::select('item_name', \Illuminate\Support\Facades\DB::raw('count(*) as total_sales'))
+                ->groupBy('item_name')
+                ->orderBy('total_sales', 'desc')
+                ->take(5)
+                ->get();
+            $recentFeedbacks = \App\Models\Feedback::latest()->take(3)->get();
+
+            return view('inventory.dashboard', compact(
+                'totalRevenue', 'totalOrders', 'ordersToday',
+                'lowStockCount', 'activePromotions', 'topItems', 'recentFeedbacks'
+            ));
+        })->name('admin.dashboard');
+
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
         Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
@@ -117,6 +141,12 @@ Route::middleware(['auth'])->group(function () {
                 'topProduct' => $topProduct
             ]);
         })->name('reports.index');
+
+        // Promotions
+        Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
+        Route::post('/promotions', [PromotionController::class, 'store'])->name('promotions.store');
+        Route::patch('/promotions/{id}/toggle', [PromotionController::class, 'toggle'])->name('promotions.toggle');
+        Route::delete('/promotions/{id}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
     });
 
     Route::post('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
