@@ -102,7 +102,7 @@
                         <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                             <input type="checkbox" name="is_active" id="is_active" value="1"
                                 style="width: 16px; height: 16px; cursor: pointer;"
-                                {{ old('is_active', '1') ? 'checked' : '' }}>
+                                {{ old('is_active', true) ? 'checked' : '' }}>
                             <label for="is_active"
                                 style="font-size: 0.85rem; font-weight: 600; color: #3d2b1f; cursor: pointer;">
                                 Active (visible to staff)

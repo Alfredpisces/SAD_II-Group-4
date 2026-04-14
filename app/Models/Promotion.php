@@ -32,7 +32,7 @@ class Promotion extends Model
     public function isRunning(): bool
     {
         return $this->is_active
-            && now()->greaterThanOrEqualTo($this->start_date)
-            && now()->lessThanOrEqualTo($this->end_date);
+            && now()->startOfDay()->greaterThanOrEqualTo($this->start_date->startOfDay())
+            && now()->endOfDay()->lessThanOrEqualTo($this->end_date->endOfDay());
     }
 }

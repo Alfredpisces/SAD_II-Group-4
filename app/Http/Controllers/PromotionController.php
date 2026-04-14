@@ -32,7 +32,7 @@ class PromotionController extends Controller
             'discount_value' => $request->discount_value,
             'start_date'     => $request->start_date,
             'end_date'       => $request->end_date,
-            'is_active'      => $request->has('is_active') ? true : false,
+            'is_active'      => $request->boolean('is_active'),
         ]);
 
         return redirect()->back()->with('success', 'Promotion created successfully!');
