@@ -49,6 +49,22 @@
         </div>
     @endif
 
+    @if (session('success'))
+        <div
+            class="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md bg-green-100 border-l-4 border-green-500 text-green-700 p-4 shadow-2xl rounded-lg flex justify-between items-center">
+            <p class="text-sm font-bold">✅ {{ session('success') }}</p>
+            <button onclick="this.parentElement.remove()" class="font-bold text-xl">&times;</button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div
+            class="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md bg-red-100 border-l-4 border-red-500 text-red-700 p-4 shadow-2xl rounded-lg flex justify-between items-center">
+            <p class="text-sm font-bold">⚠️ {{ session('error') }}</p>
+            <button onclick="this.parentElement.remove()" class="font-bold text-xl">&times;</button>
+        </div>
+    @endif
+
     <header class="w-full bg-[#3D2314] text-[#EADECB] p-5 rounded-2xl shadow-xl flex justify-between items-center mb-6">
         <div class="text-2xl font-bold">☕ CafeEase</div>
         <form method="POST" action="{{ route('logout') }}">
