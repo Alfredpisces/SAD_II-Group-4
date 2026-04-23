@@ -17,16 +17,14 @@
         }
 
         @keyframes pulse {
-            0% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
 
             50% {
                 opacity: 0.5;
-            }
-
-            100% {
-                opacity: 1;
             }
         }
     </style>
@@ -35,14 +33,26 @@
 <body class="bg-amber-50 h-screen flex flex-col p-4 md:p-8">
     <header class="w-full bg-[#3D2314] text-[#EADECB] p-5 rounded-2xl shadow-xl flex justify-between items-center mb-6">
         <div class="flex items-center gap-3 text-2xl font-bold tracking-tight"><span>☕</span> CafeEase | Barista</div>
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit"
-                class="text-sm border border-[#EADECB] px-4 py-1.5 rounded-full hover:bg-red-900 transition">Logout</button>
-        </form>
+
+        <div class="flex items-center gap-4">
+            <span class="text-[10px] bg-white/10 px-2 py-1 rounded">Total in View: {{ count($orders) }}</span>
+
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit"
+                    class="text-sm border border-[#EADECB] px-4 py-1.5 rounded-full hover:bg-red-900 transition">Logout</button>
+            </form>
+        </div>
     </header>
 
     <main class="flex-1 bg-white p-8 rounded-3xl shadow-lg border border-gray-100 flex flex-col overflow-hidden">
+
+        @if (session('error'))
+            <div class="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg shadow-sm">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-[#3D2314]">Incoming Orders</h1>
             <span
@@ -63,11 +73,13 @@
                                 class="text-[9px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-bold uppercase">New</span>
                         @endif
                     </div>
+
                     <div class="flex justify-between items-center mb-3">
                         <span class="font-bold text-xl text-[#3D2314]">#{{ $order->id }}</span>
                         <span
                             class="text-[10px] font-bold text-gray-500 uppercase mr-12">{{ $order->created_at->diffForHumans() }}</span>
                     </div>
+
                     <p class="text-[#3D2314] font-semibold text-lg mb-1">{{ $order->item_name }}</p>
                     <p class="text-gray-600 text-xs mb-6 italic">Quantity: {{ $order->quantity }}</p>
 
@@ -77,16 +89,19 @@
                                 @csrf
                                 <input type="hidden" name="status" value="preparing">
                                 <button type="submit"
-                                    class="px-4 py-2 bg-[#E0D1B9] text-[#3D2314] text-xs font-semibold rounded-full hover:bg-stone-300 transition">Start
-                                    Making</button>
+                                    class="px-4 py-2 bg-[#E0D1B9] text-[#3D2314] text-xs font-semibold rounded-full hover:bg-stone-300 transition">
+                                    Start Making
+                                </button>
                             </form>
                         @endif
+
                         <form action="{{ route('orders.updateStatus', $order->id) }}" method="POST">
                             @csrf
                             <input type="hidden" name="status" value="ready">
                             <button type="submit"
-                                class="px-4 py-2 bg-[#3D2314] text-[#EADECB] text-xs font-semibold rounded-full hover:bg-green-900 shadow-md transition">Mark
-                                as Ready</button>
+                                class="px-4 py-2 bg-[#3D2314] text-[#EADECB] text-xs font-semibold rounded-full hover:bg-green-900 shadow-md transition">
+                                Mark as Ready
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -94,12 +109,14 @@
                 <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400">
                     <div class="text-6xl mb-4 text-amber-200">☕</div>
                     <p class="text-xl font-medium italic">The queue is empty. Relax!</p>
+                    <p class="text-sm mt-2">Waiting for status: 'pending' or 'preparing'</p>
                 </div>
             @endforelse
         </div>
     </main>
 
     <script>
+        // Refreshes the queue every 15 seconds to check for new orders
         setTimeout(() => {
             window.location.reload();
         }, 15000);

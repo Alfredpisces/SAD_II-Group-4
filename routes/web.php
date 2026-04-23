@@ -5,7 +5,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\BaristaController;
 use App\Http\Controllers\StaffController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\Feedback; 
@@ -26,6 +25,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Feedback for Customers (QR Code Target)
 Route::get('/feedback-customer', function () {
     return view('feedback'); 
 })->name('feedback.customer');
@@ -44,12 +44,7 @@ Route::post('/submit-feedback', function (Request $request) {
     return back()->with('success', 'Thank you for your feedback!');
 });
 
-Route::middleware('guest')->group(function () {
-    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('/register', [RegisteredUserController::class, 'store']);
-});
-
-// --- 2. PROTECTED ROUTES ---
+// --- 2. PROTECTED ROUTES (Login Required) ---
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', function () {
@@ -62,21 +57,34 @@ Route::middleware(['auth'])->group(function () {
         };
     })->name('dashboard');
 
+    // Cashier Routes
     Route::prefix('cashier')->name('cashier.')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     });
 
+    // Barista Routes
     Route::get('/barista/dashboard', [BaristaController::class, 'index'])->name('barista.dashboard');
 
-    Route::prefix('admin')->group(function () {
-        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
-        Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
-        Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
+    // Global Order Status Update (Shared by Barista/Cashier)
+    Route::post('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
+    // --- 3. ADMIN ONLY ROUTES ---
+    Route::middleware(['can:admin'])->prefix('admin')->group(function () {
+        
+        // Staff Management
+        // We use StaffController for everything here to keep it centralized
+        Route::prefix('staff')->name('staff.')->group(function () {
+            Route::get('/', [StaffController::class, 'index'])->name('index');
+            Route::post('/store', [StaffController::class, 'store'])->name('store');
+            Route::delete('/{id}', [StaffController::class, 'destroy'])->name('destroy');
+        });
+
+        // Inventory
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::post('/inventory/{id}', [InventoryController::class, 'updateStock'])->name('inventory.update');
 
+        // Feedback Management
         Route::get('/feedback', function() { 
             $feedbacks = Feedback::latest()->get();
             $average = $feedbacks->avg('rating') ?: 0; 
@@ -89,24 +97,14 @@ Route::middleware(['auth'])->group(function () {
             return back()->with('success', 'Feedback removed successfully.');
         })->name('feedback.destroy');
         
-        // --- FIXED REPORTS ROUTE ---
+        // Reports
         Route::get('/reports', function() { 
-            // 1. Total Stats
             $totalRevenue = Order::sum('total') ?: 0;
             $totalOrders = Order::count();
-
-            // 2. Best Seller Logic (Uses 'item_name' from your migration)
             $topProduct = Order::select('item_name', DB::raw('count(*) as total_sales'))
-                ->groupBy('item_name')
-                ->orderBy('total_sales', 'desc')
-                ->first();
-
-            // 3. 7-Day Sales Trend
+                ->groupBy('item_name')->orderBy('total_sales', 'desc')->first();
             $salesData = Order::selectRaw('DATE(created_at) as date, SUM(total) as total')
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->take(7)
-                ->get();
+                ->groupBy('date')->orderBy('date', 'asc')->take(7)->get();
 
             return view('inventory.reports', [
                 'totalRevenue' => $totalRevenue,
@@ -119,8 +117,7 @@ Route::middleware(['auth'])->group(function () {
         })->name('reports.index');
     });
 
-    Route::post('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
-
+    // Profile Management
     Route::controller(ProfileController::class)->group(function () {
         Route::get('/profile', 'edit')->name('profile.edit');
         Route::patch('/profile', 'update')->name('profile.update');

@@ -5,48 +5,65 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth; // Added for security checks
+use Illuminate\Support\Facades\Auth;
 
 class StaffController extends Controller
 {
+    /**
+     * Display the Staff Management dashboard.
+     */
     public function index()
     {
-        // This gets all users so you can see them in your table
-        // We exclude the current user from the list if you don't want to delete yourself by accident
-        $staffs = User::all(); 
-        return view('inventory.staff', compact('staffs'));
+        // Fetch users with staff-related roles
+        // You can use User::all() if you want to see everyone, 
+        // but filtering by role keeps the management focused.
+        $staffs = User::whereIn('role', ['barista', 'cashier'])
+                      ->latest()
+                      ->get();
+
+        return view('inventory.staff_index', compact('staffs'));
     }
 
+    /**
+     * Store a newly created staff member.
+     */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,barista,cashier' // Specific roles to prevent DB errors
+            'role' => 'required|in:barista,cashier',
         ]);
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
+        try {
+            User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+            ]);
 
-        return redirect()->back()->with('success', 'New staff member added successfully!');
+            return redirect()->route('staff.index')->with('success', 'New staff member added successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Could not register staff. Please try again.');
+        }
     }
 
+    /**
+     * Remove the staff member.
+     */
     public function destroy($id)
     {
         $user = User::findOrFail($id);
 
-        // SECURITY: Prevent the logged-in admin from deleting their own account
+        // Security: Prevent deleting the currently logged-in admin
         if ($user->id === Auth::id()) {
-            return redirect()->back()->with('error', 'You cannot delete your own admin account!');
+            return redirect()->back()->with('error', 'You cannot delete your own account while logged in.');
         }
 
         $user->delete();
 
-        return redirect()->back()->with('success', 'Staff member removed.');
+        return redirect()->route('staff.index')->with('success', 'Staff member removed from the system.');
     }
 }

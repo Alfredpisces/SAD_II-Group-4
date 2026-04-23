@@ -10,11 +10,22 @@ class BaristaController extends Controller
     // PASTE IT HERE
 public function index()
 {
-    // This will now catch all individual rows created by the loop above
+    // ONLY show orders that are brand new or currently being made
+    // This makes 'ready' or 'completed' orders vanish from this screen
     $orders = \App\Models\Order::whereIn('status', ['pending', 'preparing'])
-                ->orderBy('created_at', 'desc')
+                ->oldest()
                 ->get();
 
     return view('barista.index', compact('orders'));
 }
+
+public function updateStatus(Request $request, $id)
+{
+    $order = \App\Models\Order::findOrFail($id);
+    $order->status = $request->status;
+    $order->save();
+
+    return back()->with('success', 'Order updated!');
+}
+
 }

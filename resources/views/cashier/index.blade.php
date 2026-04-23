@@ -97,8 +97,17 @@
             </div>
 
             <div class="bg-white p-8 rounded-3xl shadow-lg flex-1 flex flex-col overflow-hidden">
-                <h2 class="text-2xl font-bold mb-4 text-[#3D2314]">Current Order</h2>
-                <div id="order-items-list" class="flex-1 overflow-y-auto border-b mb-4"></div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-[#3D2314]">Current Order</h2>
+                    <button onclick="clearOrder()"
+                        class="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wider">
+                        Clear All
+                    </button>
+                </div>
+
+                <div id="order-items-list" class="flex-1 overflow-y-auto border-b mb-4">
+                </div>
+
                 <form action="{{ route('cashier.orders.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="item_name" id="hidden-item-name">
@@ -118,27 +127,71 @@
         let cart = [];
 
         function addToOrder(name, price) {
-            cart.push({
-                name,
-                price
-            });
+            const existingItem = cart.find(item => item.name === name);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    name,
+                    price,
+                    quantity: 1
+                });
+            }
             renderCart();
+        }
+
+        function removeFromOrder(name) {
+            const itemIndex = cart.findIndex(item => item.name === name);
+            if (itemIndex > -1) {
+                if (cart[itemIndex].quantity > 1) {
+                    cart[itemIndex].quantity -= 1;
+                } else {
+                    cart.splice(itemIndex, 1);
+                }
+            }
+            renderCart();
+        }
+
+        function clearOrder() {
+            if (cart.length > 0 && confirm('Are you sure you want to clear the entire order?')) {
+                cart = [];
+                renderCart();
+            }
         }
 
         function renderCart() {
             const list = document.getElementById('order-items-list');
-            list.innerHTML = cart.map(item =>
-                    `<div class="flex justify-between py-2 text-sm"><span>${item.name}</span><b>₱${item.price}</b></div>`)
-                .join('');
-            const total = cart.reduce((sum, i) => sum + i.price, 0);
+
+            list.innerHTML = cart.map(item => `
+                <div class="flex justify-between items-center py-3 border-b border-gray-50 text-sm">
+                    <div class="flex flex-col">
+                        <span class="font-bold text-[#3D2314]">${item.name}</span>
+                        <span class="text-xs text-gray-400">₱${item.price.toLocaleString()} each</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="removeFromOrder('${item.name}')" class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-600 font-bold hover:bg-red-200">-</button>
+                        <span class="font-bold w-4 text-center">${item.quantity}</span>
+                        <button type="button" onclick="addToOrder('${item.name}', ${item.price})" class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-600 font-bold hover:bg-green-200">+</button>
+                        <b class="ml-4 w-16 text-right font-black text-[#3D2314]">₱${(item.price * item.quantity).toLocaleString()}</b>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
             document.getElementById('total-display').innerText = total.toLocaleString();
-            document.getElementById('hidden-item-name').value = cart.map(i => i.name).join(', ');
+
+            // Updates hidden inputs for the Laravel backend
+            document.getElementById('hidden-item-name').value = cart.map(i => `${i.quantity}x ${i.name}`).join(', ');
             document.getElementById('hidden-total').value = total;
+
             const btn = document.getElementById('submit-btn');
             btn.disabled = cart.length === 0;
-            btn.className = cart.length ? "w-full py-4 bg-[#3D2314] text-white rounded-full font-bold shadow-lg" :
+            btn.className = cart.length ?
+                "w-full py-4 bg-[#3D2314] text-white rounded-full font-bold shadow-lg transform active:scale-95 transition" :
                 "w-full py-4 bg-gray-200 text-gray-400 rounded-full font-bold";
         }
+
+        // Auto-refresh pickup list every 20s if no active order is being built
         setInterval(() => {
             if (cart.length === 0) window.location.reload();
         }, 20000);

@@ -6,9 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
-
 {
-    // These MUST match your database column names exactly
+    use HasFactory;
+
+    // These allow the OrderController to save data to these specific columns
     protected $fillable = [
         'item_name',
         'quantity',
@@ -20,7 +21,7 @@ class Order extends Model
 
     /**
      * The attributes that should be cast.
-     * This ensures the Barista sees correct numbers, not strings.
+     * This ensures the price and total are treated as numbers, not strings.
      */
     protected $casts = [
         'price' => 'decimal:2',
@@ -28,11 +29,6 @@ class Order extends Model
         'quantity' => 'integer',
     ];
 
-    /**
-     * Default values for attributes.
-     * This ensures every order starts as 'pending' automatically.
-     */
-    protected $attributes = [
-        'status' => 'pending',
-    ];
+    // Note: We removed $attributes because your HeidiSQL table 
+    // already handles the 'pending' default status perfectly.
 }
