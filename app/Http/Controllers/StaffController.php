@@ -39,9 +39,10 @@ class StaffController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => $request->role,
+                'is_active' => false, // New accounts start as inactive and require admin activation
             ]);
 
-            return redirect()->route('staff.index')->with('success', 'New staff member added successfully!');
+            return redirect()->route('staff.index')->with('success', 'New staff member added successfully! Account is pending activation.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Could not register staff. Please try again.');
         }
