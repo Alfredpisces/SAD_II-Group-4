@@ -45,7 +45,7 @@ Route::post('/submit-feedback', function (Request $request) {
 });
 
 // --- 2. PROTECTED ROUTES (Login Required) ---
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'check.account.active'])->group(function () {
 
     Route::get('/dashboard', function () {
         $role = auth()->user()->role;
@@ -79,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/staff/{id}/edit', [StaffController::class, 'edit'])->name('staff.edit');
         Route::put('/staff/{id}', [StaffController::class, 'update'])->name('staff.update');
         Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
+        Route::put('/staff/{id}/toggle-active', [StaffController::class, 'toggleActive'])->name('staff.toggleActive');
 
         // Inventory
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');

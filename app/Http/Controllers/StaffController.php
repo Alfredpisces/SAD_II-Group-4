@@ -106,4 +106,27 @@ class StaffController extends Controller
 
         return redirect()->route('staff.index')->with('success', 'Staff member removed from the system.');
     }
+
+    /**
+     * Toggle staff member activation status.
+     */
+    public function toggleActive($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Security: Prevent disabling the currently logged-in admin
+        if ($user->id === Auth::id()) {
+            return redirect()->back()->with('error', 'You cannot change the status of your own account while logged in.');
+        }
+
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        $action = $user->is_active ? 'activated' : 'deactivated';
+        $message = $user->is_active 
+            ? "Account activated! {$user->name} can now log in." 
+            : "Account deactivated. {$user->name} cannot log in until reactivated.";
+
+        return redirect()->route('staff.index')->with('success', $message);
+    }
 }

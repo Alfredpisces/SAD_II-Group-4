@@ -21,6 +21,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role', // IMPORTANT: Add this so the seeder can save the admin role
+        'is_active',
     ];
 
     /**

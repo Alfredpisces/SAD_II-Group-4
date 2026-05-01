@@ -16,6 +16,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'System Admin',
                 'password' => Hash::make('password123'), // Default password
                 'role' => 'admin', // Make sure this matches your role column name
+                'is_active' => true, // Admin account is always active
             ]
         );
     }

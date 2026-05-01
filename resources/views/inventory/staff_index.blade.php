@@ -134,9 +134,16 @@
                 <div class="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100 h-full">
                     <div class="flex justify-between items-center mb-8">
                         <h2 class="text-xl font-bold text-[#3D2314]">Team Members</h2>
-                        <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">
-                            {{ count($staffs) }} ACTIVE
-                        </span>
+                        <div class="flex gap-2">
+                            <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">
+                                {{ count(array_filter($staffs->toArray(), fn($s) => $s['is_active'])) }} ACTIVE
+                            </span>
+                            @if(count(array_filter($staffs->toArray(), fn($s) => !$s['is_active'])) > 0)
+                                <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">
+                                    {{ count(array_filter($staffs->toArray(), fn($s) => !$s['is_active'])) }} PENDING
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -145,6 +152,7 @@
                                 <tr class="text-gray-400 text-[10px] uppercase tracking-widest border-b">
                                     <th class="pb-4 font-black">Personnel</th>
                                     <th class="pb-4 font-black">Role</th>
+                                    <th class="pb-4 font-black">Status</th>
                                     <th class="pb-4 text-right font-black">Action</th>
                                 </tr>
                             </thead>
@@ -169,8 +177,34 @@
                                                 {{ $member->role }}
                                             </span>
                                         </td>
+                                        <td class="py-5">
+                                            <span
+                                                class="px-3 py-1 rounded-full text-[10px] font-black uppercase {{ $member->is_active ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                                {{ $member->is_active ? 'Active' : 'Pending Activation' }}
+                                            </span>
+                                        </td>
                                         <td class="py-5 text-right">
                                             <div class="flex justify-end gap-2">
+                                                <!-- ACTIVATE/DEACTIVATE BUTTON -->
+                                                <form action="{{ route('staff.toggleActive', $member->id) }}" method="POST"
+                                                    onsubmit="return confirm('{{ $member->is_active ? 'Deactivate this account?' : 'Activate this account?' }}')"
+                                                    class="inline">
+                                                    @csrf @method('PUT')
+                                                    <button type="submit"
+                                                        class="p-2 {{ $member->is_active ? 'text-gray-300 hover:text-red-500' : 'text-gray-300 hover:text-green-500' }} transition-colors"
+                                                        title="{{ $member->is_active ? 'Deactivate' : 'Activate' }}">
+                                                        @if($member->is_active)
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        @else
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        @endif
+                                                    </button>
+                                                </form>
+
                                                 <!-- EDIT BUTTON -->
                                                 <a href="{{ route('staff.edit', $member->id) }}"
                                                     class="p-2 text-gray-300 hover:text-blue-500 transition-colors"
