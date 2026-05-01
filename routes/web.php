@@ -73,12 +73,12 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['can:admin'])->prefix('admin')->group(function () {
         
         // Staff Management
-        // We use StaffController for everything here to keep it centralized
-        Route::prefix('staff')->name('staff.')->group(function () {
-            Route::get('/', [StaffController::class, 'index'])->name('index');
-            Route::post('/store', [StaffController::class, 'store'])->name('store');
-            Route::delete('/{id}', [StaffController::class, 'destroy'])->name('destroy');
-        });
+        // Removing the extra prefix('staff') inside the admin prefix to avoid "staff.staff" names
+        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::get('/staff/{id}/edit', [StaffController::class, 'edit'])->name('staff.edit');
+        Route::put('/staff/{id}', [StaffController::class, 'update'])->name('staff.update');
+        Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
 
         // Inventory
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
@@ -123,6 +123,6 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/profile', 'update')->name('profile.update');
         Route::delete('/profile', 'destroy')->name('profile.destroy');
     });
-});
+}); // This correctly closes the main middleware(['auth']) group
 
 require __DIR__.'/auth.php';

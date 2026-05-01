@@ -33,6 +33,12 @@
             </div>
         @endif
 
+        @if (session('error'))
+            <div class="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-xl shadow-sm">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <section class="lg:col-span-1">
                 <div class="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
@@ -44,16 +50,27 @@
                                     d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                             </svg>
                         </span>
-                        Register Staff
+                        {{ isset($staff) ? 'Edit Staff Member' : 'Register Staff' }}
                     </h2>
 
-                    <form action="{{ route('staff.store') }}" method="POST" class="space-y-5">
+                    <!-- FORM ACTION CHANGES HERE -->
+                    <form action="{{ isset($staff) ? route('staff.update', $staff->id) : route('staff.store') }}" method="POST" class="space-y-5">
                         @csrf
+                        <!-- ADD THIS LINE FOR UPDATE -->
+                        @if(isset($staff))
+                            @method('PUT')
+                        @endif
+
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Full Name</label>
                             <input type="text" name="name"
                                 class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#3D2314] outline-none"
-                                placeholder="Enter staff name" required>
+                                placeholder="Enter staff name"
+                                value="{{ isset($staff) ? $staff->name : old('name') }}"
+                                required>
+                            @error('name')
+                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <div>
@@ -61,7 +78,12 @@
                                 Address</label>
                             <input type="email" name="email"
                                 class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#3D2314] outline-none"
-                                placeholder="staff@email.com" required>
+                                placeholder="staff@email.com"
+                                value="{{ isset($staff) ? $staff->email : old('email') }}"
+                                required>
+                            @error('email')
+                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <div>
@@ -69,22 +91,41 @@
                             <select name="role"
                                 class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#3D2314] outline-none appearance-none"
                                 required>
-                                <option value="cashier">Cashier</option>
-                                <option value="barista">Barista</option>
+                                <option value="">Select Role</option>
+                                <option value="cashier" {{ (isset($staff) && $staff->role === 'cashier') || old('role') === 'cashier' ? 'selected' : '' }}>Cashier</option>
+                                <option value="barista" {{ (isset($staff) && $staff->role === 'barista') || old('role') === 'barista' ? 'selected' : '' }}>Barista</option>
                             </select>
+                            @error('role')
+                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Password</label>
                             <input type="password" name="password"
                                 class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#3D2314] outline-none"
-                                placeholder="••••••••" required>
+                                placeholder="••••••••"
+                                {{ isset($staff) ? '' : 'required' }}>
+                            @if(isset($staff))
+                                <p class="text-xs text-gray-400 mt-2">Leave blank to keep current password</p>
+                            @endif
+                            @error('password')
+                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <button type="submit"
                             class="w-full py-4 bg-[#3D2314] text-white rounded-2xl font-bold shadow-lg hover:bg-black transition-all active:scale-95">
-                            + Add to Team
+                            {{ isset($staff) ? '✓ Update Staff Member' : '+ Add to Team' }}
                         </button>
+
+                        <!-- CANCEL BUTTON FOR EDIT MODE -->
+                        @if(isset($staff))
+                            <a href="{{ route('staff.index') }}"
+                                class="w-full block text-center py-4 bg-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-400 transition-all">
+                                Cancel
+                            </a>
+                        @endif
                     </form>
                 </div>
             </section>
@@ -108,40 +149,54 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
-                                @forelse($staffs as $staff)
+                                @forelse($staffs as $member)
                                     <tr class="group hover:bg-gray-50 transition-colors">
                                         <td class="py-5">
                                             <div class="flex items-center">
                                                 <div
                                                     class="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-[#3D2314] font-bold mr-3 uppercase">
-                                                    {{ substr($staff->name, 0, 1) }}
+                                                    {{ substr($member->name, 0, 1) }}
                                                 </div>
                                                 <div>
-                                                    <p class="font-bold text-[#3D2314]">{{ $staff->name }}</p>
-                                                    <p class="text-xs text-gray-400">{{ $staff->email }}</p>
+                                                    <p class="font-bold text-[#3D2314]">{{ $member->name }}</p>
+                                                    <p class="text-xs text-gray-400">{{ $member->email }}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="py-5">
                                             <span
-                                                class="px-3 py-1 rounded-full text-[10px] font-black uppercase {{ $staff->role == 'barista' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">
-                                                {{ $staff->role }}
+                                                class="px-3 py-1 rounded-full text-[10px] font-black uppercase {{ $member->role == 'barista' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">
+                                                {{ $member->role }}
                                             </span>
                                         </td>
                                         <td class="py-5 text-right">
-                                            <form action="{{ route('staff.destroy', $staff->id) }}" method="POST"
-                                                onsubmit="return confirm('Remove staff member?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                    class="p-2 text-gray-300 hover:text-red-500 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <div class="flex justify-end gap-2">
+                                                <!-- EDIT BUTTON -->
+                                                <a href="{{ route('staff.edit', $member->id) }}"
+                                                    class="p-2 text-gray-300 hover:text-blue-500 transition-colors"
+                                                    title="Edit Staff">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
-                                                </button>
-                                            </form>
+                                                </a>
+
+                                                <!-- DELETE BUTTON -->
+                                                <form action="{{ route('staff.destroy', $member->id) }}" method="POST"
+                                                    onsubmit="return confirm('Remove staff member?')"
+                                                    class="inline">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                        class="p-2 text-gray-300 hover:text-red-500 transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty

@@ -14,9 +14,6 @@ class StaffController extends Controller
      */
     public function index()
     {
-        // Fetch users with staff-related roles
-        // You can use User::all() if you want to see everyone, 
-        // but filtering by role keeps the management focused.
         $staffs = User::whereIn('role', ['barista', 'cashier'])
                       ->latest()
                       ->get();
@@ -47,6 +44,49 @@ class StaffController extends Controller
             return redirect()->route('staff.index')->with('success', 'New staff member added successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Could not register staff. Please try again.');
+        }
+    }
+
+    /**
+     * Show the edit form for a staff member.
+     */
+    public function edit($id)
+    {
+        $staff = User::findOrFail($id);
+        $staffs = User::whereIn('role', ['barista', 'cashier'])->latest()->get();
+
+        return view('inventory.staff_index', compact('staff', 'staffs'));
+    }
+
+    /**
+     * Update the staff member.
+     */
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:8',
+            'role' => 'required|in:barista,cashier',
+        ]);
+
+        try {
+            $user->update([
+                'name' => $request->name,
+                'email' => $request->email,
+                'role' => $request->role,
+            ]);
+
+            // Only update password if provided
+            if ($request->filled('password')) {
+                $user->update(['password' => Hash::make($request->password)]);
+            }
+
+            return redirect()->route('staff.index')->with('success', 'Staff member updated successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Could not update staff. Please try again.');
         }
     }
 
