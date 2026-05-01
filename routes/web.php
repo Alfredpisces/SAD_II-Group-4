@@ -61,6 +61,7 @@ Route::middleware(['auth', 'check.account.active'])->group(function () {
     Route::prefix('cashier')->name('cashier.')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::get('/receipt/{id}', [OrderController::class, 'printReceipt'])->name('receipt');
     });
 
     // Barista Routes
