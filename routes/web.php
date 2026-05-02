@@ -84,6 +84,8 @@ Route::middleware(['auth', 'check.account.active'])->group(function () {
 
         // Inventory
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
         Route::post('/inventory/{id}', [InventoryController::class, 'updateStock'])->name('inventory.update');
 
         // Feedback Management

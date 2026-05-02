@@ -1,6 +1,12 @@
 <x-app-layout>
     <div style="background-color: #fcf9f1; min-height: 100vh; padding: 2rem;">
 
+        @if (session('success'))
+            <div style="background-color: #dcfce7; border: 1px solid #86efac; color: #166534; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                <strong>✓ Success!</strong> {{ session('success') }}
+            </div>
+        @endif
+
         <div
             style="background-color: #3d2b1f; border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; color: #fcf9f1;">
             <div style="display: flex; align-items: center; gap: 1rem;">
@@ -21,12 +27,12 @@
                     <h3 style="color: #3d2b1f; font-weight: bold; margin-bottom: 1rem;">Stock Summary</h3>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <p style="color: #6b7280; margin: 0;">Total Items</p>
-                        <p style="color: #3d2b1f; font-weight: 900; font-size: 1.5rem; margin: 0;">04</p>
+                        <p style="color: #3d2b1f; font-weight: 900; font-size: 1.5rem; margin: 0;">{{ count($ingredients) }}</p>
                     </div>
-                    <button
-                        style="width: 100%; margin-top: 1.5rem; background-color: #3d2b1f; color: #d4b08c; padding: 1rem; border-radius: 1rem; border: none; font-weight: bold; cursor: pointer;">
-                        + Add New Asset
-                    </button>
+                    <a href="{{ route('inventory.create') }}"
+                        style="width: 100%; margin-top: 1.5rem; background-color: #3d2b1f; color: #d4b08c; padding: 1rem; border-radius: 1rem; border: none; font-weight: bold; cursor: pointer; display: block; text-align: center; text-decoration: none;">
+                        + Add New Ingredient
+                    </a>
                 </div>
             </div>
 
@@ -54,7 +60,7 @@
                                 <div style="text-align: right;">
                                     <p style="margin: 0; font-size: 1.2rem; font-weight: 900; color: #3d2b1f;">
                                         {{ number_format($item->stock) }} <small
-                                            style="font-weight: normal; color: #9ca3af;">grams</small>
+                                            style="font-weight: normal; color: #9ca3af;">{{ $item->unit }}</small>
                                     </p>
                                 </div>
                                 <button
