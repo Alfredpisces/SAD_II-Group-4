@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             User::firstOrCreate(['email' => $userData['email']], $userData);
         }
 
-        // 2. Seed all products and ingredients via IngredientSeeder
+        // Seed all products and ingredients via IngredientSeeder
         $this->call(IngredientSeeder::class);
     }
 }
