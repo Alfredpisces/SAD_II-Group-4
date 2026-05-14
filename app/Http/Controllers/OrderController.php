@@ -96,4 +96,13 @@ class OrderController extends Controller
 
         return back()->with('notification', $message);
     }
+
+    /**
+     * Display the receipt for printing
+     */
+    public function printReceipt($id)
+    {
+        $order = Order::findOrFail($id);
+        return view('cashier.receipt', compact('order'));
+    }
 }
