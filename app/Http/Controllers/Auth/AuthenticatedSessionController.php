@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
          * even with the /admin prefix.
          */
         return match($role) {
-            'admin'   => redirect()->route('inventory.index'),
+            'admin'   => redirect()->route('admin.dashboard'),
             'barista' => redirect()->route('barista.dashboard'),
             'cashier' => redirect()->route('cashier.orders'),
             default   => redirect()->intended(route('dashboard', absolute: false)),

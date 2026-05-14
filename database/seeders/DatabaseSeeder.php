@@ -11,48 +11,21 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create a Default Admin User
-        User::updateOrCreate(
-            ['email' => 'admin@cafe.com'], 
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('password123'),
-                'role' => 'admin',
-            ]
-        );
-
-        // 2. Create a Default Staff/Cashier User
-        // This follows your leader's instruction to provide pre-made accounts
-        User::updateOrCreate(
-            ['email' => 'staff@cafe.com'],
-            [
-                'name' => 'Cashier One',
-                'password' => Hash::make('staff123'),
-                'role' => 'staff', // Ensure your 'users' table migration has a 'role' column
-            ]
-        );
-
-        // 3. Create Default Menu Products & Ingredients
-        $products = [
-            // Raw Materials / Ingredients
-            ['name' => 'Coffee Beans', 'category' => 'Raw Material', 'stock' => 5000, 'price' => 0],
-            ['name' => 'Fresh Milk', 'category' => 'Raw Material', 'stock' => 5000, 'price' => 0],
-            ['name' => 'Condensed Milk', 'category' => 'Raw Material', 'stock' => 5000, 'price' => 0],
-            ['name' => 'Paper Cup', 'category' => 'Raw Material', 'stock' => 1000, 'price' => 0],
-
-            // Finished Products for the Cashier Menu
-            ['name' => 'Americano', 'category' => 'Beverage', 'stock' => 100, 'price' => 85],
-            ['name' => 'Caffe Latte', 'category' => 'Beverage', 'stock' => 100, 'price' => 110],
-            ['name' => 'Spanish Latte', 'category' => 'Beverage', 'stock' => 100, 'price' => 125],
-            ['name' => 'Caramel Macchiato', 'category' => 'Beverage', 'stock' => 100, 'price' => 135],
-            ['name' => 'Glazed Donut', 'category' => 'Pastry', 'stock' => 20, 'price' => 55],
+        // Default accounts — run: php artisan db:seed
+        // Admin   : admin@cafe.com    / admin123
+        // Barista : barista@cafe.com  / barista123
+        // Cashier : cashier@cafe.com  / cashier123
+        $defaultUsers = [
+            ['name' => 'Admin User',    'email' => 'admin@cafe.com',   'password' => Hash::make('admin123'),   'role' => 'admin'],
+            ['name' => 'Default Barista', 'email' => 'barista@cafe.com', 'password' => Hash::make('barista123'), 'role' => 'barista'],
+            ['name' => 'Default Cashier', 'email' => 'cashier@cafe.com', 'password' => Hash::make('cashier123'), 'role' => 'cashier'],
         ];
 
-        foreach ($products as $item) {
-            Product::updateOrCreate(
-                ['name' => $item['name']], 
-                $item
-            );
+        foreach ($defaultUsers as $userData) {
+            User::firstOrCreate(['email' => $userData['email']], $userData);
         }
+
+        // 2. Seed all products and ingredients via IngredientSeeder
+        $this->call(IngredientSeeder::class);
     }
 }

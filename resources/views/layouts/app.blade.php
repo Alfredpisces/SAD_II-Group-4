@@ -46,6 +46,16 @@
             </div>
 
             <nav class="flex-grow px-4 space-y-3 overflow-y-auto custom-scrollbar">
+                <a href="{{ route('admin.dashboard') }}"
+                    class="flex items-center w-full py-4 px-5 rounded-2xl transition-all duration-300 {{ request()->routeIs('admin.dashboard') ? 'bg-[#d4b08c]' : 'hover:bg-white/5' }}"
+                    style="text-decoration: none;">
+                    <span style="font-size: 1.25rem; margin-right: 1rem;">🏠</span>
+                    <span
+                        style="font-weight: 700; font-size: 0.9rem; color: {{ request()->routeIs('admin.dashboard') ? '#ffffff' : '#d4b08c' }};">
+                        Dashboard
+                    </span>
+                </a>
+
                 <a href="{{ route('inventory.index') }}"
                     class="flex items-center w-full py-4 px-5 rounded-2xl transition-all duration-300 {{ request()->routeIs('inventory.*') ? 'bg-[#d4b08c]' : 'hover:bg-white/5' }}"
                     style="text-decoration: none;">
@@ -83,6 +93,16 @@
                     <span
                         style="font-weight: 700; font-size: 0.9rem; color: {{ request()->routeIs('reports.*') ? '#ffffff' : '#d4b08c' }};">
                         Reports
+                    </span>
+                </a>
+
+                <a href="{{ route('promotions.index') }}"
+                    class="flex items-center w-full py-4 px-5 rounded-2xl transition-all duration-300 {{ request()->routeIs('promotions.*') ? 'bg-[#d4b08c]' : 'hover:bg-white/5' }}"
+                    style="text-decoration: none;">
+                    <span style="font-size: 1.25rem; margin-right: 1rem;">🎁</span>
+                    <span
+                        style="font-weight: 700; font-size: 0.9rem; color: {{ request()->routeIs('promotions.*') ? '#ffffff' : '#d4b08c' }};">
+                        Promotions
                     </span>
                 </a>
             </nav>

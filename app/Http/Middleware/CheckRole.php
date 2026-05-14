@@ -16,9 +16,10 @@ class CheckRole
     public function handle(Request $request, Closure $next, string $role)
 {
     // This allows the specific role OR any admin to pass
-if (!$request->user() || strtolower($request->user()->role) !== strtolower($role)) {
+$userRole = strtolower($request->user()?->role ?? '');
+    if (!$request->user() || ($userRole !== strtolower($role) && $userRole !== 'admin')) {
         abort(403, 'Unauthorized action.');
-}
+    }
 
     return $next($request);
 }

@@ -195,7 +195,7 @@
 
         <div class="button-group no-print">
             <button class="btn-print" onclick="window.print()">🖨️ Print Receipt</button>
-            <button class="btn-close" onclick="window.close()">✕ Close</button>
+            <button class="btn-close" onclick="window.location.href = '{{ route('cashier.orders') }}'">✕ Close</button>
         </div>
     </div>
 

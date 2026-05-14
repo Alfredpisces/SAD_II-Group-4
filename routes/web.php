@@ -5,6 +5,8 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\BaristaController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\Feedback; 
@@ -25,7 +27,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Feedback for Customers (QR Code Target)
 Route::get('/feedback-customer', function () {
     return view('feedback'); 
 })->name('feedback.customer');
@@ -44,51 +45,63 @@ Route::post('/submit-feedback', function (Request $request) {
     return back()->with('success', 'Thank you for your feedback!');
 });
 
-// --- 2. PROTECTED ROUTES (Login Required) ---
-Route::middleware(['auth', 'check.account.active'])->group(function () {
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('/register', [RegisteredUserController::class, 'store']);
+});
+
+// --- 2. PROTECTED ROUTES ---
+Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', function () {
         $role = auth()->user()->role;
         return match($role) {
-            'admin'   => redirect()->route('inventory.index'),
+            'admin'   => redirect()->route('admin.dashboard'),
             'barista' => redirect()->route('barista.dashboard'),
             'cashier' => redirect()->route('cashier.orders'),
             default   => redirect()->route('cashier.orders'),
         };
     })->name('dashboard');
 
-    // Cashier Routes
-    Route::prefix('cashier')->name('cashier.')->group(function () {
+    Route::prefix('cashier')->name('cashier.')->middleware(['role:cashier'])->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/receipt/{id}', [OrderController::class, 'printReceipt'])->name('receipt');
     });
 
-    // Barista Routes
-    Route::get('/barista/dashboard', [BaristaController::class, 'index'])->name('barista.dashboard');
+    Route::get('/barista/dashboard', [BaristaController::class, 'index'])->middleware(['role:barista'])->name('barista.dashboard');
 
-    // Global Order Status Update (Shared by Barista/Cashier)
-    Route::post('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::prefix('admin')->middleware(['role:admin'])->group(function () {
+        Route::get('/dashboard', function () {
+            $totalRevenue  = \App\Models\Order::where('status', 'completed')->sum('total') ?: 0;
+            $totalOrders   = \App\Models\Order::count();
+            $ordersToday   = \App\Models\Order::whereDate('created_at', today())->count();
+            $lowStockCount = \App\Models\Product::where('category', 'Raw Material')
+                ->whereColumn('stock', '<=', 'min_stock')->count();
+            $activePromotions = \App\Models\Promotion::where('is_active', true)
+                ->whereDate('start_date', '<=', today())
+                ->whereDate('end_date', '>=', today())
+                ->count();
+            $topItems = \App\Models\Order::select('item_name', \Illuminate\Support\Facades\DB::raw('count(*) as total_sales'))
+                ->groupBy('item_name')
+                ->orderBy('total_sales', 'desc')
+                ->take(5)
+                ->get();
+            $recentFeedbacks = \App\Models\Feedback::latest()->take(3)->get();
 
-    // --- 3. ADMIN ONLY ROUTES ---
-    Route::middleware(['can:admin'])->prefix('admin')->group(function () {
-        
-        // Staff Management
-        // Removing the extra prefix('staff') inside the admin prefix to avoid "staff.staff" names
+            return view('inventory.dashboard', compact(
+                'totalRevenue', 'totalOrders', 'ordersToday',
+                'lowStockCount', 'activePromotions', 'topItems', 'recentFeedbacks'
+            ));
+        })->name('admin.dashboard');
+
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
-        Route::get('/staff/{id}/edit', [StaffController::class, 'edit'])->name('staff.edit');
-        Route::put('/staff/{id}', [StaffController::class, 'update'])->name('staff.update');
         Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
-        Route::put('/staff/{id}/toggle-active', [StaffController::class, 'toggleActive'])->name('staff.toggleActive');
 
-        // Inventory
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
-        Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
         Route::post('/inventory/{id}', [InventoryController::class, 'updateStock'])->name('inventory.update');
 
-        // Feedback Management
         Route::get('/feedback', function() { 
             $feedbacks = Feedback::latest()->get();
             $average = $feedbacks->avg('rating') ?: 0; 
@@ -101,14 +114,24 @@ Route::middleware(['auth', 'check.account.active'])->group(function () {
             return back()->with('success', 'Feedback removed successfully.');
         })->name('feedback.destroy');
         
-        // Reports
+        // --- FIXED REPORTS ROUTE ---
         Route::get('/reports', function() { 
+            // 1. Total Stats
             $totalRevenue = Order::sum('total') ?: 0;
             $totalOrders = Order::count();
+
+            // 2. Best Seller Logic (Uses 'item_name' from your migration)
             $topProduct = Order::select('item_name', DB::raw('count(*) as total_sales'))
-                ->groupBy('item_name')->orderBy('total_sales', 'desc')->first();
+                ->groupBy('item_name')
+                ->orderBy('total_sales', 'desc')
+                ->first();
+
+            // 3. 7-Day Sales Trend
             $salesData = Order::selectRaw('DATE(created_at) as date, SUM(total) as total')
-                ->groupBy('date')->orderBy('date', 'asc')->take(7)->get();
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->take(7)
+                ->get();
 
             return view('inventory.reports', [
                 'totalRevenue' => $totalRevenue,
@@ -119,14 +142,21 @@ Route::middleware(['auth', 'check.account.active'])->group(function () {
                 'topProduct' => $topProduct
             ]);
         })->name('reports.index');
+
+        // Promotions
+        Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
+        Route::post('/promotions', [PromotionController::class, 'store'])->name('promotions.store');
+        Route::patch('/promotions/{id}/toggle', [PromotionController::class, 'toggle'])->name('promotions.toggle');
+        Route::delete('/promotions/{id}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
     });
 
-    // Profile Management
+    Route::post('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+
     Route::controller(ProfileController::class)->group(function () {
         Route::get('/profile', 'edit')->name('profile.edit');
         Route::patch('/profile', 'update')->name('profile.update');
         Route::delete('/profile', 'destroy')->name('profile.destroy');
     });
-}); // This correctly closes the main middleware(['auth']) group
+});
 
 require __DIR__.'/auth.php';

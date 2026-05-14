@@ -24,6 +24,7 @@ public function run(): void
         ['name' => 'Spanish Latte', 'category' => 'Coffee', 'stock' => 0, 'unit' => 'cup', 'min_stock' => 0, 'price' => 120.00],
         ['name' => 'Matcha Latte', 'category' => 'Tea', 'stock' => 0, 'unit' => 'cup', 'min_stock' => 0, 'price' => 135.00],
         ['name' => 'Americano', 'category' => 'Coffee', 'stock' => 0, 'unit' => 'cup', 'min_stock' => 0, 'price' => 110.00],
+        ['name' => 'Caramel Macchiato', 'category' => 'Coffee', 'stock' => 0, 'unit' => 'cup', 'min_stock' => 0, 'price' => 130.00],
     ];
 
     foreach ($items as $item) {
