@@ -99,6 +99,26 @@
                             </div>
                         </div>
 
+                        <div style="margin-bottom: 1rem;">
+                            <label
+                                style="display: block; font-size: 0.75rem; font-weight: 700; color: #3d2b1f; text-transform: uppercase; margin-bottom: 0.4rem;">
+                                Apply to Products
+                            </label>
+                            <div
+                                style="max-height: 160px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                @foreach ($menuProducts as $product)
+                                    <label
+                                        style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #3d2b1f; cursor: pointer;">
+                                        <input type="checkbox" name="product_ids[]" value="{{ $product->id }}"
+                                            {{ in_array($product->id, old('product_ids', [])) ? 'checked' : '' }}
+                                            style="width: 16px; height: 16px;">
+                                        <span>{{ $product->name }} — ₱{{ number_format($product->price, 0) }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error('product_ids') <p style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</p> @enderror
+                        </div>
+
                         <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                             <input type="checkbox" name="is_active" id="is_active" value="1"
                                 style="width: 16px; height: 16px; cursor: pointer;"
@@ -152,7 +172,7 @@
                                     <p style="margin: 0 0 0.5rem 0; color: #6b7280; font-size: 0.85rem;">{{ $promo->description }}</p>
                                 @endif
 
-                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
                                     <span style="font-size: 0.8rem; color: #3d2b1f; font-weight: 700;">
                                         💰 {{ $promo->discount_type === 'percentage' ? $promo->discount_value . '%' : '₱' . number_format($promo->discount_value, 2) }} off
                                     </span>
@@ -160,6 +180,16 @@
                                         📅 {{ $promo->start_date->format('M d, Y') }} – {{ $promo->end_date->format('M d, Y') }}
                                     </span>
                                 </div>
+                                @if ($promo->products->isNotEmpty())
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                                        @foreach ($promo->products as $product)
+                                            <span
+                                                style="background-color: #d4b08c; color: #3d2b1f; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 700;">
+                                                {{ $product->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
 
                             <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">

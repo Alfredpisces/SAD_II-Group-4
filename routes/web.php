@@ -97,9 +97,14 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::get('/staff/{id}/edit', [StaffController::class, 'edit'])->name('staff.edit');
+        Route::put('/staff/{id}', [StaffController::class, 'update'])->name('staff.update');
+        Route::put('/staff/{id}/toggle-active', [StaffController::class, 'toggleActive'])->name('staff.toggleActive');
         Route::delete('/staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
 
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
         Route::post('/inventory/{id}', [InventoryController::class, 'updateStock'])->name('inventory.update');
 
         Route::get('/feedback', function() { 

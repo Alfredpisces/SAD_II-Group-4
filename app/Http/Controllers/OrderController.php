@@ -11,7 +11,9 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $products = Product::whereNotIn('category', ['Raw Material'])->get();
+        $products = Product::whereNotIn('category', ['Raw Material'])
+            ->orderBy('name')
+            ->get();
 
         return view('cashier.index', compact('products'));
     }
@@ -43,7 +45,11 @@ class OrderController extends Controller
                     if (!$product) {
                         throw new \Exception("Menu item \"$drinkName\" not found.");
                     }
-                    $price = $product->price;
+                    $originalPrice = (float) $product->price;
+                    $promotion = $product->activePromotion();
+                    $price = $promotion
+                        ? $promotion->applyDiscount($originalPrice)
+                        : $originalPrice;
 
                     // Deduct raw-material stock if a recipe exists
                     if (isset($recipes[$drinkName])) {
@@ -64,12 +70,14 @@ class OrderController extends Controller
                     }
 
                     $order = Order::create([
-                        'item_name' => $drinkName,
-                        'quantity'  => $quantity,
-                        'price'     => $price,
-                        'total'     => $price * $quantity,
-                        'status'    => 'pending',
-                        'user_id'   => auth()->id() ?? 1,
+                        'item_name'      => $drinkName,
+                        'quantity'       => $quantity,
+                        'price'          => $price,
+                        'original_price' => $promotion ? $originalPrice : null,
+                        'promotion_id'   => $promotion?->id,
+                        'total'          => $price * $quantity,
+                        'status'         => 'pending',
+                        'user_id'        => auth()->id() ?? 1,
                     ]);
 
                     $lastOrderId = $order->id;
@@ -102,7 +110,7 @@ class OrderController extends Controller
      */
     public function printReceipt($id)
     {
-        $order = Order::findOrFail($id);
+        $order = Order::with('promotion')->findOrFail($id);
         return view('cashier.receipt', compact('order'));
     }
 }

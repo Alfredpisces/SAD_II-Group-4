@@ -34,8 +34,11 @@
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <p style="color: #6b7280; margin: 0;">Active Staff</p>
                         <p style="color: #3d2b1f; font-weight: 900; font-size: 1.5rem; margin: 0;">
-                            {{ sprintf('%02d', count($staffs)) }}</p>
+                            {{ sprintf('%02d', $staffs->where('is_active', true)->count()) }}</p>
                     </div>
+                    <p style="color: #9ca3af; font-size: 0.75rem; margin: 0.5rem 0 0 0;">
+                        {{ $staffs->count() }} total · {{ $staffs->where('is_active', false)->count() }} inactive
+                    </p>
 
                     {{-- Default Login Info Box (shown only in non-production environments) --}}
                     @if (!app()->isProduction())
@@ -78,32 +81,43 @@
                                 </div>
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 3rem;">
-                                <div style="text-align: right;">
-                                    @php
-                                        $roleColors = ['admin' => '#ef4444', 'barista' => '#3d82f6', 'cashier' => '#059669'];
-                                        $roleColor  = $roleColors[$staff->role] ?? '#6b7280';
-                                    @endphp
-                                    <span style="font-size: 0.75rem; font-weight: 900; color: white; background: {{ $roleColor }}; padding: 2px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 1px;">
-                                        {{ $staff->role }}
-                                    </span>
-                                </div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                @php
+                                    $roleColors = ['admin' => '#ef4444', 'barista' => '#3d82f6', 'cashier' => '#059669'];
+                                    $roleColor  = $roleColors[$staff->role] ?? '#6b7280';
+                                @endphp
+                                <span style="font-size: 0.7rem; font-weight: 900; color: white; background: {{ $roleColor }}; padding: 2px 10px; border-radius: 99px; text-transform: uppercase;">
+                                    {{ $staff->role }}
+                                </span>
+                                <span style="font-size: 0.7rem; font-weight: 900; padding: 2px 10px; border-radius: 99px; text-transform: uppercase; {{ $staff->is_active ? 'background: #d1fae5; color: #065f46;' : 'background: #fef3c7; color: #92400e;' }}">
+                                    {{ $staff->is_active ? 'Active' : 'Inactive' }}
+                                </span>
 
                                 @if ($staff->id !== auth()->id())
-                                    <form action="{{ route('staff.destroy', $staff->id) }}" method="POST"
-                                        style="margin: 0;">
+                                    <form action="{{ route('staff.toggleActive', $staff->id) }}" method="POST" style="margin: 0;">
+                                        @csrf @method('PUT')
+                                        <button type="submit"
+                                            style="background: white; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 10px; cursor: pointer; font-size: 0.7rem; font-weight: 700; color: {{ $staff->is_active ? '#dc2626' : '#059669' }};"
+                                            onclick="return confirm('{{ $staff->is_active ? 'Deactivate this account?' : 'Activate this account?' }}')">
+                                            {{ $staff->is_active ? 'Deactivate' : 'Activate' }}
+                                        </button>
+                                    </form>
+                                    <a href="{{ route('staff.edit', $staff->id) }}"
+                                        style="background: white; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 10px; font-size: 0.7rem; font-weight: 700; color: #2563eb; text-decoration: none;">
+                                        Edit
+                                    </a>
+                                    <form action="{{ route('staff.destroy', $staff->id) }}" method="POST" style="margin: 0;">
                                         @csrf @method('DELETE')
                                         <button type="submit"
-                                            style="background: white; border: 1px solid #e5e7eb; padding: 0.75rem; border-radius: 10px; cursor: pointer; color: #ef4444;"
+                                            style="background: white; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 10px; cursor: pointer; color: #ef4444; font-size: 0.7rem; font-weight: 700;"
                                             onclick="return confirm('Remove this staff member?')">
-                                            ✕
+                                            Delete
                                         </button>
                                     </form>
                                 @else
-                                    <div
-                                        style="background: #3d2b1f; color: #d4b08c; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase;">
+                                    <span style="background: #3d2b1f; color: #d4b08c; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase;">
                                         You
-                                    </div>
+                                    </span>
                                 @endif
                             </div>
                         </div>
@@ -189,8 +203,86 @@
         </div>
     </div>
 
-    {{-- Re-open modal if there are validation errors --}}
-    @if ($errors->any())
+    {{-- Edit Staff Modal --}}
+    <div id="editStaffModal"
+        class="{{ isset($staff) ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center"
+        style="background-color: rgba(0,0,0,0.5);"
+        onclick="if(event.target===this) window.location.href='{{ route('staff.index') }}'">
+
+        <div style="background: white; border-radius: 2rem; padding: 2.5rem; width: 100%; max-width: 460px; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
+
+            <a href="{{ route('staff.index') }}"
+                style="position: absolute; top: 1.25rem; right: 1.5rem; background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #6b7280; text-decoration: none;">✕</a>
+
+            <h3 style="color: #3d2b1f; font-weight: 900; font-size: 1.2rem; margin: 0 0 0.25rem 0;">Edit Staff Member</h3>
+            <p style="color: #9ca3af; font-size: 0.8rem; margin: 0 0 1.5rem 0;">Leave password blank to keep the current password.</p>
+
+            @if (isset($staff) && $errors->any())
+                <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background-color: #fee2e2; color: #991b1b; border-radius: 0.75rem; font-size: 0.8rem;">
+                    <ul style="margin: 0; padding-left: 1rem;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @isset($staff)
+            <form action="{{ route('staff.update', $staff->id) }}" method="POST">
+                @csrf @method('PUT')
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #3d2b1f; text-transform: uppercase; margin-bottom: 0.4rem;">Full Name</label>
+                    <input type="text" name="name" value="{{ old('name', $staff->name) }}" required
+                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #3d2b1f; text-transform: uppercase; margin-bottom: 0.4rem;">Email Address</label>
+                    <input type="email" name="email" value="{{ old('email', $staff->email) }}" required
+                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #3d2b1f; text-transform: uppercase; margin-bottom: 0.4rem;">Role</label>
+                    <select name="role" required
+                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.9rem; outline: none; background: white; box-sizing: border-box;">
+                        <option value="cashier" {{ old('role', $staff->role) === 'cashier' ? 'selected' : '' }}>Cashier</option>
+                        <option value="barista" {{ old('role', $staff->role) === 'barista' ? 'selected' : '' }}>Barista</option>
+                        <option value="admin"   {{ old('role', $staff->role) === 'admin'   ? 'selected' : '' }}>Admin</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #3d2b1f; text-transform: uppercase; margin-bottom: 0.4rem;">New Password</label>
+                        <input type="password" name="password" placeholder="Leave blank to keep"
+                            style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #3d2b1f; text-transform: uppercase; margin-bottom: 0.4rem;">Confirm</label>
+                        <input type="password" name="password_confirmation" placeholder="Repeat if changing"
+                            style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <a href="{{ route('staff.index') }}"
+                        style="flex: 1; padding: 1rem; background: #f3f4f6; color: #6b7280; border: none; border-radius: 1rem; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none;">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                        style="flex: 2; padding: 1rem; background-color: #3d2b1f; color: #d4b08c; border: none; border-radius: 1rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+            @endisset
+        </div>
+    </div>
+
+    {{-- Re-open add modal if there are validation errors on create --}}
+    @if ($errors->any() && !isset($staff))
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('addStaffModal').classList.remove('hidden');

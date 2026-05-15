@@ -167,7 +167,15 @@
                 <div class="receipt-item">
                     <div class="receipt-item-left">
                         {{ $order->item_name }}<br>
-                        <span style="font-size: 9px;">₱{{ number_format($order->price, 2) }} x {{ $order->quantity }}</span>
+                        @if ($order->hasDiscount())
+                            <span style="font-size: 9px; text-decoration: line-through;">₱{{ number_format($order->original_price, 2) }}</span>
+                            <span style="font-size: 9px; color: #b91c1c; font-weight: bold;">₱{{ number_format($order->price, 2) }} x {{ $order->quantity }}</span>
+                            @if ($order->promotion)
+                                <br><span style="font-size: 8px; color: #b91c1c;">{{ $order->promotion->name }} ({{ $order->promotion->discountLabel() }})</span>
+                            @endif
+                        @else
+                            <span style="font-size: 9px;">₱{{ number_format($order->price, 2) }} x {{ $order->quantity }}</span>
+                        @endif
                     </div>
                     <div class="receipt-item-right">
                         ₱{{ number_format($order->total, 2) }}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Promotion;
 use Illuminate\Http\Request;
 
@@ -9,8 +10,12 @@ class PromotionController extends Controller
 {
     public function index()
     {
-        $promotions = Promotion::latest()->get();
-        return view('inventory.promotions', compact('promotions'));
+        $promotions = Promotion::with('products')->latest()->get();
+        $menuProducts = Product::whereNotIn('category', ['Raw Material'])
+            ->orderBy('name')
+            ->get();
+
+        return view('inventory.promotions', compact('promotions', 'menuProducts'));
     }
 
     public function store(Request $request)
@@ -23,9 +28,11 @@ class PromotionController extends Controller
             'start_date'     => 'required|date',
             'end_date'       => 'required|date|after_or_equal:start_date',
             'is_active'      => 'sometimes|boolean',
+            'product_ids'    => 'required|array|min:1',
+            'product_ids.*'  => 'exists:products,id',
         ]);
 
-        Promotion::create([
+        $promotion = Promotion::create([
             'name'           => $request->name,
             'description'    => $request->description,
             'discount_type'  => $request->discount_type,
@@ -35,7 +42,9 @@ class PromotionController extends Controller
             'is_active'      => $request->boolean('is_active'),
         ]);
 
-        return redirect()->back()->with('success', 'Promotion created successfully!');
+        $promotion->products()->sync($request->product_ids);
+
+        return redirect()->back()->with('success', 'Promotion created and applied to selected products!');
     }
 
     public function destroy($id)

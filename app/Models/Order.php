@@ -14,20 +14,30 @@ class Order extends Model
         'item_name',
         'quantity',
         'price',
+        'original_price',
+        'promotion_id',
         'total',
         'status',
-        'user_id'
+        'user_id',
     ];
 
-    /**
-     * The attributes that should be cast.
-     * This ensures the price and total are treated as numbers, not strings.
-     */
     protected $casts = [
         'price' => 'decimal:2',
+        'original_price' => 'decimal:2',
         'total' => 'decimal:2',
         'quantity' => 'integer',
     ];
+
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class);
+    }
+
+    public function hasDiscount(): bool
+    {
+        return $this->original_price !== null
+            && (float) $this->original_price > (float) $this->price;
+    }
 
     // Note: We removed $attributes because your HeidiSQL table 
     // already handles the 'pending' default status perfectly.

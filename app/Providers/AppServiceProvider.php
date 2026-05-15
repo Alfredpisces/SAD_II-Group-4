@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Gate; // 1. Add this import at the top
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,9 +22,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // 2. Define the 'admin' Gate here
         Gate::define('admin', function (User $user) {
             return $user->role === 'admin';
         });
+
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
+        if ($this->app->environment('local')) {
+            config(['session.secure' => false]);
+        }
     }
 }

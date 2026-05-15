@@ -79,10 +79,27 @@
             <h2 class="text-2xl font-bold text-[#3D2314] mb-6">Menu</h2>
             <div class="grid grid-cols-2 gap-4">
                 @foreach ($products as $product)
-                    <button onclick="addToOrder('{{ $product->name }}', {{ $product->price }})"
-                        class="p-6 bg-[#EADECB] text-[#3D2314] rounded-2xl hover:bg-[#3D2314] hover:text-[#EADECB] transition-all text-left group">
-                        <span class="block font-bold">{{ $product->name }}</span>
-                        <span class="block text-lg font-black mt-2">₱{{ number_format($product->price, 0) }}</span>
+                    @php
+                        $promo = $product->activePromotion();
+                        $salePrice = $product->salePrice();
+                        $hasDiscount = $product->hasActiveDiscount();
+                    @endphp
+                    <button
+                        onclick="addToOrder(@js($product->name), {{ $salePrice }}, {{ (float) $product->price }}, {{ $hasDiscount ? 'true' : 'false' }}, @js($promo?->discountLabel() ?? ''))"
+                        class="p-6 rounded-2xl transition-all text-left group relative {{ $hasDiscount ? 'bg-red-50 border-2 border-red-300 text-[#3D2314] hover:bg-red-100' : 'bg-[#EADECB] text-[#3D2314] hover:bg-[#3D2314] hover:text-[#EADECB]' }}">
+                        @if ($hasDiscount)
+                            <span
+                                class="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                                {{ $promo->discountLabel() }}
+                            </span>
+                        @endif
+                        <span class="block font-bold pr-16">{{ $product->name }}</span>
+                        @if ($hasDiscount)
+                            <span class="block text-sm text-gray-400 line-through mt-1">₱{{ number_format($product->price, 0) }}</span>
+                            <span class="block text-lg font-black mt-1 text-red-700">₱{{ number_format($salePrice, 0) }}</span>
+                        @else
+                            <span class="block text-lg font-black mt-2">₱{{ number_format($product->price, 0) }}</span>
+                        @endif
                     </button>
                 @endforeach
             </div>
@@ -142,7 +159,7 @@
     <script>
         let cart = [];
 
-        function addToOrder(name, price) {
+        function addToOrder(name, price, originalPrice, hasDiscount, discountLabel) {
             const existingItem = cart.find(item => item.name === name);
             if (existingItem) {
                 existingItem.quantity += 1;
@@ -150,20 +167,23 @@
                 cart.push({
                     name,
                     price,
+                    originalPrice,
+                    hasDiscount,
+                    discountLabel,
                     quantity: 1
                 });
             }
             renderCart();
         }
 
-        function removeFromOrder(name) {
-            const itemIndex = cart.findIndex(item => item.name === name);
-            if (itemIndex > -1) {
-                if (cart[itemIndex].quantity > 1) {
-                    cart[itemIndex].quantity -= 1;
-                } else {
-                    cart.splice(itemIndex, 1);
-                }
+        function changeQty(index, delta) {
+            if (!cart[index]) return;
+            if (delta > 0) {
+                cart[index].quantity += 1;
+            } else if (cart[index].quantity > 1) {
+                cart[index].quantity -= 1;
+            } else {
+                cart.splice(index, 1);
             }
             renderCart();
         }
@@ -178,17 +198,20 @@
         function renderCart() {
             const list = document.getElementById('order-items-list');
 
-            list.innerHTML = cart.map(item => `
+            list.innerHTML = cart.map((item, index) => `
                 <div class="flex justify-between items-center py-3 border-b border-gray-50 text-sm">
                     <div class="flex flex-col">
                         <span class="font-bold text-[#3D2314]">${item.name}</span>
-                        <span class="text-xs text-gray-400">₱${item.price.toLocaleString()} each</span>
+                        ${item.hasDiscount ? `
+                            <span class="text-xs text-gray-400 line-through">₱${Number(item.originalPrice).toLocaleString()} each</span>
+                            <span class="text-xs text-red-600 font-bold">₱${Number(item.price).toLocaleString()} each · ${item.discountLabel}</span>
+                        ` : `<span class="text-xs text-gray-400">₱${Number(item.price).toLocaleString()} each</span>`}
                     </div>
                     <div class="flex items-center gap-3">
-                        <button type="button" onclick="removeFromOrder('${item.name}')" class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-600 font-bold hover:bg-red-200">-</button>
+                        <button type="button" onclick="changeQty(${index}, -1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-600 font-bold hover:bg-red-200">-</button>
                         <span class="font-bold w-4 text-center">${item.quantity}</span>
-                        <button type="button" onclick="addToOrder('${item.name}', ${item.price})" class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-600 font-bold hover:bg-green-200">+</button>
-                        <b class="ml-4 w-16 text-right font-black text-[#3D2314]">₱${(item.price * item.quantity).toLocaleString()}</b>
+                        <button type="button" onclick="changeQty(${index}, 1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-600 font-bold hover:bg-green-200">+</button>
+                        <b class="ml-4 w-16 text-right font-black ${item.hasDiscount ? 'text-red-700' : 'text-[#3D2314]'}">₱${(item.price * item.quantity).toLocaleString()}</b>
                     </div>
                 </div>
             `).join('');
