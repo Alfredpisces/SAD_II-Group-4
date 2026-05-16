@@ -30,16 +30,17 @@ class OrderController extends Controller
         ];
 
         $selectedItems = explode(', ', $request->item_name);
+        $transactionId = 'TXN-' . strtoupper(uniqid());
         $lastOrderId = null;
 
         try {
-            DB::transaction(function () use ($selectedItems, $recipes, &$lastOrderId) {
+            DB::transaction(function () use ($selectedItems, $recipes, $transactionId, &$lastOrderId) {
                 foreach ($selectedItems as $rawName) {
                     // Parse quantity from "2x Spanish Latte" format
                     preg_match('/^(\d+)x\s+(.+)$/', trim($rawName), $matches);
                     $quantity = isset($matches[1]) ? (int)$matches[1] : 1;
                     $drinkName = isset($matches[2]) ? trim($matches[2]) : trim(preg_replace('/^\d+x\s+/', '', $rawName));
-                    
+
                     // Load price from the database
                     $product = Product::where('name', $drinkName)->first();
                     if (!$product) {
@@ -70,6 +71,7 @@ class OrderController extends Controller
                     }
 
                     $order = Order::create([
+                        'transaction_id' => $transactionId,
                         'item_name'      => $drinkName,
                         'quantity'       => $quantity,
                         'price'          => $price,
@@ -84,8 +86,8 @@ class OrderController extends Controller
                 }
             });
 
-            // Redirect to receipt page for printing
-            return redirect()->route('cashier.receipt', $lastOrderId);
+            // Redirect to receipt page for printing using transaction ID
+            return redirect()->route('cashier.receipt', $transactionId);
 
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -108,9 +110,9 @@ class OrderController extends Controller
     /**
      * Display the receipt for printing
      */
-    public function printReceipt($id)
+    public function printReceipt($transaction_id)
     {
-        $order = Order::with('promotion')->findOrFail($id);
-        return view('cashier.receipt', compact('order'));
+        $orders = Order::with('promotion')->where('transaction_id', $transaction_id)->get();
+        return view('cashier.receipt', compact('orders'));
     }
 }

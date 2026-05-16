@@ -66,7 +66,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('cashier')->name('cashier.')->middleware(['role:cashier'])->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-        Route::get('/receipt/{id}', [OrderController::class, 'printReceipt'])->name('receipt');
+        Route::get('/receipt/{transaction_id}', [OrderController::class, 'printReceipt'])->name('receipt');
     });
 
     Route::get('/barista/dashboard', [BaristaController::class, 'index'])->middleware(['role:barista'])->name('barista.dashboard');

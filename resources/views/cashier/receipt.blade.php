@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt - Order #{{ $order->id }}</title>
+    <title>Receipt - Transaction {{ $orders->first()->transaction_id }}</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @media print {
@@ -150,7 +150,7 @@
             <div class="receipt-header">
                 <h1>☕ CafeEase</h1>
                 <p>Thank You for Your Order!</p>
-                <p>Order ID: #{{ $order->id }}</p>
+                <p>Transaction ID: {{ $orders->first()->transaction_id }}</p>
                 <p>{{ now()->format('M d, Y H:i') }}</p>
             </div>
 
@@ -164,6 +164,7 @@
                     </div>
                 </div>
 
+                @foreach ($orders as $order)
                 <div class="receipt-item">
                     <div class="receipt-item-left">
                         {{ $order->item_name }}<br>
@@ -181,21 +182,22 @@
                         ₱{{ number_format($order->total, 2) }}
                     </div>
                 </div>
+                @endforeach
             </div>
 
             <div class="receipt-total">
                 <span>TOTAL:</span>
-                <span>₱{{ number_format($order->total, 2) }}</span>
+                <span>₱{{ number_format($orders->sum('total'), 2) }}</span>
             </div>
 
             <div class="receipt-qr">
                 <p style="margin: 5px 0; font-size: 9px;">Scan to provide feedback</p>
                 <div id="qrcode"></div>
-                <p style="margin: 5px 0; font-size: 8px;">Order Status: {{ ucfirst($order->status) }}</p>
+                <p style="margin: 5px 0; font-size: 8px;">Order Status: {{ ucfirst($orders->first()->status) }}</p>
             </div>
 
             <div class="receipt-footer">
-                <p>Status: {{ ucfirst($order->status) }}</p>
+                <p>Status: {{ ucfirst($orders->first()->status) }}</p>
                 <p>Your order will be prepared shortly.</p>
                 <p>Thank you! Come again!</p>
             </div>
@@ -208,8 +210,8 @@
     </div>
 
     <script>
-        // Generate QR code pointing to feedback page with order ID
-        const feedbackUrl = "{{ url('/feedback-customer') }}?order_id={{ $order->id }}";
+        // Generate QR code pointing to feedback page with transaction ID
+        const feedbackUrl = "{{ url('/feedback-customer') }}?transaction_id={{ $orders->first()->transaction_id }}";
         new QRCode(document.getElementById("qrcode"), {
             text: feedbackUrl,
             width: 128,

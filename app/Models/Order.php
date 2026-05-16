@@ -11,6 +11,7 @@ class Order extends Model
 
     // These allow the OrderController to save data to these specific columns
     protected $fillable = [
+        'transaction_id',
         'item_name',
         'quantity',
         'price',
