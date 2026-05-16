@@ -22,5 +22,6 @@ class Feedback extends Model
     protected $fillable = [
         'rating',
         'comments',
+        'transaction_id',
     ];
 }

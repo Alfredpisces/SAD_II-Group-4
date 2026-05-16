@@ -19,6 +19,9 @@
 
         <form action="{{ url('/submit-feedback') }}" method="POST" class="space-y-6">
             @csrf
+            @if(request()->has('transaction_id'))
+                <input type="hidden" name="transaction_id" value="{{ request('transaction_id') }}">
+            @endif
 
             @if (session('success'))
                 <div class="bg-green-100 text-green-700 p-4 rounded-2xl text-sm text-center font-bold">

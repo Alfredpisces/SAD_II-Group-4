@@ -38,8 +38,9 @@ Route::post('/submit-feedback', function (Request $request) {
     ]);
 
     Feedback::create([
-        'rating' => $request->rating, 
+        'rating' => $request->rating,
         'comments' => $request->comments,
+        'transaction_id' => $request->transaction_id,
     ]);
 
     return back()->with('success', 'Thank you for your feedback!');
