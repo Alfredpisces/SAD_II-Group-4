@@ -63,20 +63,20 @@
                 <h2 style="font-size: 1.8rem; font-weight: 900; color: #3d2b1f; margin-bottom: 2rem;">Team Members</h2>
 
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    @foreach ($staffs as $staff)
+                    @foreach ($staffs as $member)
                         <div
                             style="background-color: #fcf9f1; padding: 1.5rem; border-radius: 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f3f4f6;">
 
                             <div style="display: flex; align-items: center; gap: 1.5rem;">
                                 <div
                                     style="width: 50px; height: 50px; background: #3d2b1f; color: #d4b08c; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                    {{ substr($staff->name, 0, 1) }}
+                                    {{ substr($member->name, 0, 1) }}
                                 </div>
                                 <div>
-                                    <h4 style="margin: 0; color: #3d2b1f; font-weight: bold;">{{ $staff->name }}</h4>
+                                    <h4 style="margin: 0; color: #3d2b1f; font-weight: bold;">{{ $member->name }}</h4>
                                     <span
                                         style="font-size: 0.7rem; font-weight: 900; color: #d4b08c; text-transform: uppercase;">
-                                        {{ $staff->email }}
+                                        {{ $member->email }}
                                     </span>
                                 </div>
                             </div>
@@ -84,29 +84,29 @@
                             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                                 @php
                                     $roleColors = ['admin' => '#ef4444', 'barista' => '#3d82f6', 'cashier' => '#059669'];
-                                    $roleColor  = $roleColors[$staff->role] ?? '#6b7280';
+                                    $roleColor  = $roleColors[$member->role] ?? '#6b7280';
                                 @endphp
                                 <span style="font-size: 0.7rem; font-weight: 900; color: white; background: {{ $roleColor }}; padding: 2px 10px; border-radius: 99px; text-transform: uppercase;">
-                                    {{ $staff->role }}
+                                    {{ $member->role }}
                                 </span>
-                                <span style="font-size: 0.7rem; font-weight: 900; padding: 2px 10px; border-radius: 99px; text-transform: uppercase; {{ $staff->is_active ? 'background: #d1fae5; color: #065f46;' : 'background: #fef3c7; color: #92400e;' }}">
-                                    {{ $staff->is_active ? 'Active' : 'Inactive' }}
+                                <span style="font-size: 0.7rem; font-weight: 900; padding: 2px 10px; border-radius: 99px; text-transform: uppercase; {{ $member->is_active ? 'background: #d1fae5; color: #065f46;' : 'background: #fef3c7; color: #92400e;' }}">
+                                    {{ $member->is_active ? 'Active' : 'Inactive' }}
                                 </span>
 
-                                @if ($staff->id !== auth()->id())
-                                    <form action="{{ route('staff.toggleActive', $staff->id) }}" method="POST" style="margin: 0;">
+                                @if ($member->id !== auth()->id())
+                                    <form action="{{ route('staff.toggleActive', $member->id) }}" method="POST" style="margin: 0;">
                                         @csrf @method('PUT')
                                         <button type="submit"
-                                            style="background: white; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 10px; cursor: pointer; font-size: 0.7rem; font-weight: 700; color: {{ $staff->is_active ? '#dc2626' : '#059669' }};"
-                                            onclick="return confirm('{{ $staff->is_active ? 'Deactivate this account?' : 'Activate this account?' }}')">
-                                            {{ $staff->is_active ? 'Deactivate' : 'Activate' }}
+                                            style="background: white; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 10px; cursor: pointer; font-size: 0.7rem; font-weight: 700; color: {{ $member->is_active ? '#dc2626' : '#059669' }};"
+                                            onclick="return confirm('{{ $member->is_active ? 'Deactivate this account?' : 'Activate this account?' }}')">
+                                            {{ $member->is_active ? 'Deactivate' : 'Activate' }}
                                         </button>
                                     </form>
-                                    <a href="{{ route('staff.edit', $staff->id) }}"
+                                    <a href="{{ route('staff.edit', $member->id) }}"
                                         style="background: white; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 10px; font-size: 0.7rem; font-weight: 700; color: #2563eb; text-decoration: none;">
                                         Edit
                                     </a>
-                                    <form action="{{ route('staff.destroy', $staff->id) }}" method="POST" style="margin: 0;">
+                                    <form action="{{ route('staff.destroy', $member->id) }}" method="POST" style="margin: 0;">
                                         @csrf @method('DELETE')
                                         <button type="submit"
                                             style="background: white; border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; border-radius: 10px; cursor: pointer; color: #ef4444; font-size: 0.7rem; font-weight: 700;"
@@ -205,9 +205,8 @@
 
     {{-- Edit Staff Modal --}}
     <div id="editStaffModal"
-        class="{{ isset($staff) && request()->routeIs('staff.edit') ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center"
-        style="background-color: rgba(0,0,0,0.5);"
-        onclick="if(event.target===this) window.location.href='{{ route('staff.index') }}'">
+        class="{{ isset($staff) && request()->is('admin/staff/*/edit') ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center"
+        style="background-color: rgba(0,0,0,0.5);">
 
         <div style="background: white; border-radius: 2rem; padding: 2.5rem; width: 100%; max-width: 460px; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.2);">
 
