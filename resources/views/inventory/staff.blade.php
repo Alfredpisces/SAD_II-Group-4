@@ -205,7 +205,7 @@
 
     {{-- Edit Staff Modal --}}
     <div id="editStaffModal"
-        class="{{ isset($staff) ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center"
+        class="{{ isset($staff) && request()->routeIs('staff.edit') ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center"
         style="background-color: rgba(0,0,0,0.5);"
         onclick="if(event.target===this) window.location.href='{{ route('staff.index') }}'">
 
